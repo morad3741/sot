@@ -22,6 +22,11 @@
             <version>3.8.1</version>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.jaxrs</groupId>
+            <artifactId>jackson-jaxrs-xml-provider</artifactId>
+            <version>2.4.6</version>
+        </dependency>
     </dependencies>
     <build>
         <plugins>
@@ -42,7 +47,7 @@
                 <configuration>
                     <archive>
                         <manifest>
-                            <mainClass>multiserverclient.core.HelloWorld</mainClass>
+                            <mainClass>multiserverclient.core.MainApp</mainClass>
                         </manifest>
                     </archive>
                     <descriptorRefs>
@@ -65,6 +70,7 @@
             <plugin>
                 <groupId>io.fabric8</groupId>
                 <artifactId>docker-maven-plugin</artifactId>
+                <version>0.21.0</version>
                 <configuration>
                     <images>
                         <image>
