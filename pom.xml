@@ -79,8 +79,8 @@
                 <configuration>
                     <images>
                         <image>
-                            <name>test</name>
-                            <alias>hello-world</alias>
+                            <name>app</name>
+                            <alias>app</alias>
                             <build>
                                 <from>java:9</from>
                                 <assembly>
