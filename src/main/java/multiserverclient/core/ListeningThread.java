@@ -1,23 +1,20 @@
 package multiserverclient.core;
 
+import org.apache.log4j.Logger;
+
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.util.ArrayList;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 /**
  * Created by LD on 10/06/2017.
  */
 public class ListeningThread implements Runnable {
+    final static Logger logger = Logger.getLogger(ListeningThread.class);
 
     DatagramSocket socket;
-
-    public static ListeningThread getInstance() {
-        return DiscoveryThreadHolder.INSTANCE;
-    }
 
     @Override
     public void run() {
@@ -33,44 +30,30 @@ public class ListeningThread implements Runnable {
                 socket.receive(packet);
 
                 //Packet received
-                if (!packet.getAddress().getHostAddress().equals(Common.getMyDevice().getAddress()) && (!packet.getAddress().getHostAddress().equals("127.0.0.1"))) {
-                    System.out.println(getClass().getSimpleName() + ">>>packet received from: " + packet.getAddress().getHostAddress() + " data:" + new String(packet.getData()));
-
+                if (!Hierarchy.ipsToIgnore.contains(packet.getAddress().getHostAddress())) {
+                    logger.debug("packet received from: " + packet.getAddress().getHostAddress() + " data:" + new String(packet.getData()));
                     //See if the packet holds the right command (message)
                     String message = new String(packet.getData()).trim();
                     if (message.startsWith("NEW_DEVICE-")) {
                         String newDeviceJsonData = message.split("NEW_DEVICE-")[1];
                         Device newDevice = Common.deSerialiseObject(newDeviceJsonData, Device.class);
-                        if (Hierarchy.knownDevicesInMyNetwork.get(newDevice.getAddress()) == null && !newDevice.getAddress().equals(Common.getMyDevice().getAddress())) {
-                            Hierarchy.knownDevicesInMyNetwork.put(newDevice.getAddress(), newDevice);
-                            System.out.println(getClass().getSimpleName() + ">>> Map Content:");
-                            Hierarchy.knownDevicesInMyNetwork.entrySet().forEach(entry -> System.out.println("\tKey:" + entry.getKey() + " Value:" + entry.getValue()));
-
-
-                            ArrayList<Device> responseArrayList = new ArrayList(Hierarchy.knownDevicesInMyNetwork.values());
-                            responseArrayList.remove(newDevice);
-
-                            String responseData = "DEVICE_ACCEPTED-" + Common.serialiseObject(responseArrayList);
+                        if (Hierarchy.knownDevicesInMyNetwork.get(newDevice.getAddress()) == null) {
+                            Hierarchy.knownDevicesInMyNetwork.putIfAbsent(newDevice.getAddress(), newDevice);
+                            Common.printMap(Hierarchy.knownDevicesInMyNetwork);
+                            String responseData = "DEVICE_ACCEPTED-" + Common.serialiseObject(new ArrayList(Hierarchy.knownDevicesInMyNetwork.values()));
                             byte[] sendData = responseData.getBytes();
 
                             //Send a response
                             DatagramPacket sendPacket = new DatagramPacket(sendData, sendData.length, packet.getAddress(), packet.getPort());
                             socket.send(sendPacket);
 
-                            System.out.println(getClass().getSimpleName() + ">>>Returned packet to: " + sendPacket.getAddress().getHostAddress() + " data:" + responseData);
+                            logger.debug("Returned packet to: " + sendPacket.getAddress().getHostAddress() + " data:" + responseData);
                         }
                     }
                 }
             }
         } catch (IOException ex) {
-            System.out.println("ListeningThreadError:" + ex.getMessage());
-            Logger.getLogger(ListeningThread.class.getSimpleName()).log(Level.SEVERE, null, ex);
+            logger.error(ex.getMessage());
         }
     }
-
-    private static class DiscoveryThreadHolder {
-
-        private static final ListeningThread INSTANCE = new ListeningThread();
-    }
-
 }

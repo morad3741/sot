@@ -3,14 +3,16 @@ package multiserverclient.core;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.apache.log4j.Logger;
 
 import java.io.IOException;
+import java.util.Map;
 import java.util.Random;
-
 /**
  * Created by LD on 18/08/2017.
  */
 public class Common {
+    final static Logger logger = Logger.getLogger(Common.class);
 
     private static int counter;
     private static Random rnd;
@@ -70,6 +72,17 @@ public class Common {
             Thread.sleep(millis);
         } catch (InterruptedException e) {
             e.printStackTrace();
+        }
+    }
+
+    public static <K, V> void printMap(Map<K, V> map) {
+        if (map.size() == 0)
+            logger.debug("Map Content: Empty");
+        else {
+            logger.debug("Map Content:");
+            for (Map.Entry<K, V> entry : map.entrySet()) {
+                logger.debug("\t" + entry.getKey() + "->" + entry.getValue());
+            }
         }
     }
 

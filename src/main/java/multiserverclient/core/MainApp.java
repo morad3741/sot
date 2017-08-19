@@ -1,30 +1,38 @@
 package multiserverclient.core;
 
+import org.apache.log4j.Logger;
+
 /**
  * Created by LD on 04/06/2017.
  */
 public class MainApp {
+
+    private final static Logger logger = Logger.getLogger(MainApp.class);
+
     public static void main(String[] args) {
         try {
-            System.out.println("System Started, Device=" + Common.serialiseObject(Common.getMyDevice()));
-            Hierarchy.knownDevicesInMyNetwork.put(Common.getMyDevice().getAddress(), Common.getMyDevice());
-            //System.out.println("launching ListeningThread");
-            Thread listeningThread = new Thread(new ListeningThread());
-            listeningThread.start();
+            logger.debug("System Started, Device=" + Common.serialiseObject(Common.getMyDevice()));
 
-            int rndTime = Common.getRandomInt(1, 10);
-            Common.sleep(rndTime);
 
-            // System.out.println("launching DiscoveryThread");
-            Thread discoveryThread = new Thread(new DiscoveryThread());
-            discoveryThread.start();
+            Hierarchy.launchListeningThread();
 
-            synchronized (listeningThread) {
-                listeningThread.wait(); // just to prevent system close
+            Hierarchy.launchDiscoveringThread();
+
+
+            synchronized (Hierarchy.listeningThread) {
+                try {
+                    Hierarchy.listeningThread.wait(); // just to prevent system close
+                } catch (InterruptedException e) {
+                    logger.error(e.getMessage());
+                    e.printStackTrace();
+                }
             }
-            System.out.println("END.");
+
+
+            logger.debug("END.");
         } catch (Exception e) {
-            System.out.println("MainAppError: " + e.getMessage());
+            logger.error(e.getMessage());
+            e.printStackTrace();
         }
 
 
