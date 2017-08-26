@@ -47,7 +47,7 @@ public class KeepAliveManager {
                 Future<Boolean> keepAliveFutureTask = mapEntry.getValue();
                 Boolean isDeviceAlive;
                 try {
-                    logger.info("Trying To get keepAlive for " + device.getAddress());
+                    logger.debug("Trying To get keepAlive for " + device.getAddress());
                     isDeviceAlive = keepAliveFutureTask.get(15, TimeUnit.SECONDS);
                 } catch (InterruptedException | ExecutionException e) {
                     e.printStackTrace();
@@ -56,7 +56,7 @@ public class KeepAliveManager {
                     logger.info("TimeOut Exception");
                     isDeviceAlive = false;
                 }
-                logger.info("keepAlive Result for Device:" + device.getAddress() + ":" + isDeviceAlive);
+                logger.debug("keepAlive Result for Device:" + device.getAddress() + ":" + isDeviceAlive);
             }
     }
 
