@@ -4,7 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.log4j.Logger;
-import sot.core.Device;
+import sot.core.entities.Device;
 
 import java.io.IOException;
 import java.util.Map;
@@ -13,6 +13,7 @@ import java.util.Random;
 /**
  * Created by LD on 18/08/2017.
  */
+
 public class Common {
     final static Logger logger = Logger.getLogger(Common.class);
 
@@ -21,14 +22,16 @@ public class Common {
     private static ObjectMapper objectMapper;
     private static Device myDevice;
 
-    static {
+
+  static {
         counter = 1;
         myDevice = new Device("Device" + counter++);
         objectMapper = new ObjectMapper();
         rnd = new Random();
+        logger.debug("System Started, Device=" + serialiseObject(getMyDevice()));
     }
 
-    private Common() {
+    protected Common() {
     }
 
     public static String serialiseObject(Object obj) {
@@ -39,7 +42,6 @@ public class Common {
         }
         return null;
     }
-
     public static <E> E deSerialiseObject(String jsonInString, Class<E> targetClass) {
         try {
             E obj = objectMapper.readValue(jsonInString, targetClass);
@@ -49,7 +51,6 @@ public class Common {
         }
         return null;
     }
-
     public static <T> T deSerialiseObjectToList(final String jsonPacket, final TypeReference<T> type) {
         T data = null;
 
@@ -60,15 +61,12 @@ public class Common {
         }
         return data;
     }
-
     public static Device getMyDevice() {
         return myDevice;
     }
-
     public static int getRandomInt(int low, int high) {
         return rnd.nextInt(high - low) + low;
     }
-
     public static void sleep(long millis) {
         try {
             Thread.sleep(millis);
@@ -76,7 +74,6 @@ public class Common {
             e.printStackTrace();
         }
     }
-
     public static <K, V> void printMap(Map<K, V> map) {
         if (map.size() == 0)
             logger.debug("Map Content: Empty");

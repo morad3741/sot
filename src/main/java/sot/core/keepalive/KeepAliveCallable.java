@@ -1,7 +1,7 @@
 package sot.core.keepalive;
 
 import org.apache.log4j.Logger;
-import sot.core.Device;
+import sot.core.entities.Device;
 
 import java.util.concurrent.Callable;
 

@@ -2,12 +2,15 @@ package sot.core;
 
 import org.apache.log4j.Logger;
 import sot.common.Common;
+import sot.core.entities.Device;
 
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Created by LD on 10/06/2017.
@@ -16,7 +19,13 @@ public class ListeningThread implements Runnable {
     final static Logger logger = Logger.getLogger(ListeningThread.class);
 
     DatagramSocket socket;
+    private ConcurrentHashMap<String, Device> knownDevicesInMyNetwork;
+    private HashSet<String> ipsToIgnore;
 
+    public ListeningThread(ConcurrentHashMap<String, Device> knownDevicesInMyNetwork,HashSet<String> ipsToIgnore){
+        this.ipsToIgnore =  ipsToIgnore;
+        this.knownDevicesInMyNetwork = knownDevicesInMyNetwork;
+    }
     @Override
     public void run() {
         try {
@@ -31,17 +40,17 @@ public class ListeningThread implements Runnable {
                 socket.receive(packet);
 
                 //Packet received
-                if (!Hierarchy.ipsToIgnore.contains(packet.getAddress().getHostAddress())) {
+                if (!ipsToIgnore.contains(packet.getAddress().getHostAddress())) {
                     logger.debug("packet received from: " + packet.getAddress().getHostAddress() + " data:" + new String(packet.getData()));
                     //See if the packet holds the right command (message)
                     String message = new String(packet.getData()).trim();
                     if (message.startsWith("NEW_DEVICE-")) {
                         String newDeviceJsonData = message.split("NEW_DEVICE-")[1];
                         Device newDevice = Common.deSerialiseObject(newDeviceJsonData, Device.class);
-                        if (Hierarchy.knownDevicesInMyNetwork.get(newDevice.getAddress()) == null) {
-                            Hierarchy.knownDevicesInMyNetwork.putIfAbsent(newDevice.getAddress(), newDevice);
-                            Common.printMap(Hierarchy.knownDevicesInMyNetwork);
-                            String responseData = "DEVICE_ACCEPTED-" + Common.serialiseObject(new ArrayList(Hierarchy.knownDevicesInMyNetwork.values()));
+                        if (knownDevicesInMyNetwork.get(newDevice.getAddress()) == null) {
+                            knownDevicesInMyNetwork.putIfAbsent(newDevice.getAddress(), newDevice);
+                            Common.printMap(knownDevicesInMyNetwork);
+                            String responseData = "DEVICE_ACCEPTED-" + Common.serialiseObject(new ArrayList(knownDevicesInMyNetwork.values()));
                             byte[] sendData = responseData.getBytes();
 
                             //Send a response

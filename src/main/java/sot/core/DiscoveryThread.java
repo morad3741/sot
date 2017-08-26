@@ -3,11 +3,14 @@ package sot.core;
 import com.fasterxml.jackson.core.type.TypeReference;
 import org.apache.log4j.Logger;
 import sot.common.Common;
+import sot.core.entities.Device;
 
 import java.io.IOException;
 import java.net.*;
 import java.util.ArrayList;
 import java.util.Enumeration;
+import java.util.HashSet;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Created by LD on 18/08/2017.
@@ -16,6 +19,13 @@ public class DiscoveryThread implements Runnable {
 
     final static Logger logger = Logger.getLogger(DiscoveryThread.class);
 
+    private ConcurrentHashMap<String, Device> knownDevicesInMyNetwork;
+    private HashSet<String> ipsToIgnore;
+
+    public DiscoveryThread(ConcurrentHashMap<String, Device> knownDevicesInMyNetwork,HashSet<String> ipsToIgnore){
+        this.ipsToIgnore =  ipsToIgnore;
+        this.knownDevicesInMyNetwork = knownDevicesInMyNetwork;
+    }
     @Override
     public void run() {
         // Find the server using UDP broadcast
@@ -47,7 +57,7 @@ public class DiscoveryThread implements Runnable {
                 }
 
                 for (InterfaceAddress interfaceAddress : networkInterface.getInterfaceAddresses()) {
-                    Hierarchy.ipsToIgnore.add(interfaceAddress.getAddress().getHostAddress());
+                    ipsToIgnore.add(interfaceAddress.getAddress().getHostAddress());
                     InetAddress broadcast = interfaceAddress.getBroadcast();
                     if (broadcast == null) {
                         continue;
@@ -77,7 +87,7 @@ public class DiscoveryThread implements Runnable {
 
 
             //We have a response
-            if (!Hierarchy.ipsToIgnore.contains(receivePacket.getAddress().getHostAddress())) {
+            if (!ipsToIgnore.contains(receivePacket.getAddress().getHostAddress())) {
                 logger.debug("Received response from: " + receivePacket.getAddress().getHostAddress());
 
                 //Check if the message is correct
@@ -87,9 +97,9 @@ public class DiscoveryThread implements Runnable {
                     ArrayList<Device> knownDevices = Common.deSerialiseObjectToList(knownDevicesInNetwork, new TypeReference<ArrayList<Device>>() {
                     });
                     for (Device device : knownDevices) {
-                        Hierarchy.knownDevicesInMyNetwork.putIfAbsent(device.getAddress(), device);
+                        knownDevicesInMyNetwork.putIfAbsent(device.getAddress(), device);
                     }
-                    Common.printMap(Hierarchy.knownDevicesInMyNetwork);
+                    Common.printMap( knownDevicesInMyNetwork);
                 }
             }
 

@@ -1,9 +1,12 @@
 package sot.core.keepalive;
 
 import org.apache.log4j.Logger;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.stereotype.Component;
 import sot.common.Common;
-import sot.core.Device;
-import sot.core.Hierarchy;
+import sot.core.IHierarchy;
+import sot.core.entities.Device;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -12,24 +15,25 @@ import java.util.concurrent.*;
 /**
  * Created by LD on 19/08/2017.
  */
+@Component
 public class KeepAliveManager {
 
     final static Logger logger = Logger.getLogger(KeepAliveCallable.class);
-    private static ScheduledExecutorService scheduledExecutorService = Executors.newScheduledThreadPool(1);
-    private static ExecutorService cachedThreadPool = Executors.newCachedThreadPool();
+    @Autowired
+    private IHierarchy hierarchy;
+    private  ExecutorService cachedThreadPool = Executors.newCachedThreadPool();
 
-    private KeepAliveManager() {
+    protected KeepAliveManager() {
     }
 
-    public static void start() {
+    @Scheduled(fixedDelay=5000)
+    protected void initScheduler() {
         Map<Device, Future<Boolean>> keepAliveResultMap = new HashMap<>();
 
-        scheduledExecutorService.scheduleWithFixedDelay(() -> {
-
             keepAliveResultMap.clear();
-            for (String deviceAddress : Hierarchy.knownDevicesInMyNetwork.keySet()) {
+            for (String deviceAddress : hierarchy.getKnownDevicesInMyNetwork().keySet()) {
                 // get(i) may not exist anymore but may still be in view of the iterator
-                Device device = Hierarchy.knownDevicesInMyNetwork.getOrDefault(deviceAddress, null);
+                Device device = hierarchy.getKnownDevicesInMyNetwork().getOrDefault(deviceAddress, null);
                 if (device == null || device == Common.getMyDevice())
                     continue;
                 else {
@@ -54,10 +58,6 @@ public class KeepAliveManager {
                 }
                 logger.info("keepAlive Result for Device:" + device.getAddress() + ":" + isDeviceAlive);
             }
-
-        }, 0, 5, TimeUnit.SECONDS);
-
-
     }
 
 

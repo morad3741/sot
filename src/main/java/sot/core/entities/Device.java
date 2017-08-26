@@ -1,4 +1,4 @@
-package sot.core;
+package sot.core.entities;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
