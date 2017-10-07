@@ -123,7 +123,9 @@
 			            <plugin>
 			                <groupId>io.fabric8</groupId>
 			                <artifactId>docker-maven-plugin</artifactId>
+							<version>0.21.0</version>
 			                <configuration>
+
 			                    <images>
 			                        <image>
 			                            <name>app</name>
@@ -133,13 +135,25 @@
 			                                <assembly>
 			                                    <descriptorRef>artifact-with-dependencies</descriptorRef>
 			                                </assembly>
-			                                <cmd>java -jar maven/${project.name}-${project.version}.jar</cmd>
+			                                <cmd>java -agentlib:jdwp=transport=dt_socket,address=5005,suspend=y,server=y -jar maven/${project.name}-${project.version}.jar</cmd>
 			                            </build>
-			                            <!--<run>-->
+			                            <run>
+											<ports>
+												<port>5005:5005</port>
+												<!--<port>host.port:80</port>-->
+												<!--<port>127.0.0.1:80:80</port>-->
+												<!--<port>localhost:host.port:80</port>-->
+												<!--<port>+container.ip.property:host.port:5678</port>-->
+												<!--<port>+bind.host.ip:host.port:5678</port>-->
+												<!--<port>+bind.host.name:5678:5678</port>-->
+											</ports>
+											<network>
+												<mode>bridge</mode>
+											</network>
 			                            <!--<wait>-->
 			                            <!--<log>Hello World!</log>-->
 			                            <!--</wait>-->
-			                            <!--</run>-->
+			                            </run>
 			                        </image>
 			                    </images>
 			                </configuration>

@@ -1,6 +1,7 @@
 package sot.core.keepalive;
 
 import org.apache.log4j.Logger;
+import org.springframework.beans.factory.annotation.Autowired;
 import sot.core.entities.Device;
 
 import java.util.concurrent.Callable;
@@ -12,6 +13,9 @@ public class KeepAliveCallable implements Callable<Boolean> {
 
     final static Logger logger = Logger.getLogger(KeepAliveCallable.class);
 
+    @Autowired
+    private HostAvailabilityCheck hostAvailabilityCheck;
+
     private Device device;
 
     public KeepAliveCallable(Device device) {
@@ -21,9 +25,9 @@ public class KeepAliveCallable implements Callable<Boolean> {
     @Override
     public Boolean call() throws Exception {
         try {
-            Thread.sleep(3 * 1000);
+            hostAvailabilityCheck.hostAvailabilityCheck(device.getIpAddress(),1111);
             return true;
-        } catch (InterruptedException e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
         return false;

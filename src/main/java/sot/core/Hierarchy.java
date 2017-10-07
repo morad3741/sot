@@ -1,5 +1,6 @@
 package sot.core;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import sot.common.Common;
 import sot.core.entities.Device;
@@ -14,16 +15,19 @@ import java.util.concurrent.ConcurrentHashMap;
 @Component
 public class Hierarchy implements IHierarchy {
 
-    public  ConcurrentHashMap<String, Device> knownDevicesInMyNetwork = new ConcurrentHashMap<>();
-    public  HashSet<String> ipsToIgnore = new HashSet<>();
-    public  Thread listeningThread;
-    public  Thread discoveryThread;
+    @Autowired
+    ListeningThread listeningThread;
 
+    @Autowired
+    DiscoveryThread discoveryThread;
+
+    private  ConcurrentHashMap<String, Device> knownDevicesInMyNetwork = new ConcurrentHashMap<>();
+    private  HashSet<String> ipsToIgnore = new HashSet<>();
 
     @PostConstruct
     protected void init(){
-        knownDevicesInMyNetwork.put(Common.getMyDevice().getAddress(), Common.getMyDevice());
-        ipsToIgnore.add(Common.getMyDevice().getAddress());
+        knownDevicesInMyNetwork.put(Common.getMyDevice().getIpAddress(), Common.getMyDevice());
+        ipsToIgnore.add(Common.getMyDevice().getIpAddress());
         ipsToIgnore.add("127.0.0.1");
         launchListeningThread();
         launchDiscoveringThread();
@@ -31,7 +35,6 @@ public class Hierarchy implements IHierarchy {
 
 
     private void launchListeningThread() {
-        listeningThread = new Thread(new ListeningThread(knownDevicesInMyNetwork,ipsToIgnore));
         listeningThread.start();
     }
 
@@ -39,8 +42,6 @@ public class Hierarchy implements IHierarchy {
         //in case multiple devices launch in the same time launch discoveringThread in different time
         int rndTime = Common.getRandomInt(1, 10);
         Common.sleep(rndTime);
-
-        discoveryThread = new Thread(new DiscoveryThread(knownDevicesInMyNetwork,ipsToIgnore));
         discoveryThread.start();
     }
 

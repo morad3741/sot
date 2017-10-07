@@ -2,6 +2,9 @@ package sot.core;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import org.apache.log4j.Logger;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Scope;
+import org.springframework.stereotype.Component;
 import sot.common.Common;
 import sot.core.entities.Device;
 
@@ -9,23 +12,19 @@ import java.io.IOException;
 import java.net.*;
 import java.util.ArrayList;
 import java.util.Enumeration;
-import java.util.HashSet;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Created by LD on 18/08/2017.
  */
-public class DiscoveryThread implements Runnable {
+@Component
+@Scope("prototype")
+public class DiscoveryThread extends Thread {
 
     final static Logger logger = Logger.getLogger(DiscoveryThread.class);
 
-    private ConcurrentHashMap<String, Device> knownDevicesInMyNetwork;
-    private HashSet<String> ipsToIgnore;
+    @Autowired
+    IHierarchy hierarchy;
 
-    public DiscoveryThread(ConcurrentHashMap<String, Device> knownDevicesInMyNetwork,HashSet<String> ipsToIgnore){
-        this.ipsToIgnore =  ipsToIgnore;
-        this.knownDevicesInMyNetwork = knownDevicesInMyNetwork;
-    }
     @Override
     public void run() {
         // Find the server using UDP broadcast
@@ -57,11 +56,11 @@ public class DiscoveryThread implements Runnable {
                 }
 
                 for (InterfaceAddress interfaceAddress : networkInterface.getInterfaceAddresses()) {
-                    ipsToIgnore.add(interfaceAddress.getAddress().getHostAddress());
                     InetAddress broadcast = interfaceAddress.getBroadcast();
                     if (broadcast == null) {
                         continue;
                     }
+                    hierarchy.getIpsToIgnore().add(interfaceAddress.getAddress().getHostAddress());
 
                     // Send the broadcast package!
                     try {
@@ -80,14 +79,14 @@ public class DiscoveryThread implements Runnable {
             try {
                 c.receive(receivePacket);
             } catch (SocketTimeoutException e) {
-                logger.debug(" Discovery timeout reached");
+                logger.debug("Discovery timeout reached");
                 c.close();
                 return;
             }
 
 
             //We have a response
-            if (!ipsToIgnore.contains(receivePacket.getAddress().getHostAddress())) {
+            if (!hierarchy.getIpsToIgnore().contains(receivePacket.getAddress().getHostAddress())) {
                 logger.debug("Received response from: " + receivePacket.getAddress().getHostAddress());
 
                 //Check if the message is correct
@@ -97,9 +96,9 @@ public class DiscoveryThread implements Runnable {
                     ArrayList<Device> knownDevices = Common.deSerialiseObjectToList(knownDevicesInNetwork, new TypeReference<ArrayList<Device>>() {
                     });
                     for (Device device : knownDevices) {
-                        knownDevicesInMyNetwork.putIfAbsent(device.getAddress(), device);
+                        hierarchy.getKnownDevicesInMyNetwork().putIfAbsent(device.getIpAddress(), device);
                     }
-                    Common.printMap( knownDevicesInMyNetwork);
+                    Common.printMap( hierarchy.getKnownDevicesInMyNetwork());
                 }
             }
 

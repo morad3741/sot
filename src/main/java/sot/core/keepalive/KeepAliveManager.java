@@ -19,8 +19,10 @@ import java.util.concurrent.*;
 public class KeepAliveManager {
 
     final static Logger logger = Logger.getLogger(KeepAliveCallable.class);
+
     @Autowired
     private IHierarchy hierarchy;
+
     private  ExecutorService cachedThreadPool = Executors.newCachedThreadPool();
 
     protected KeepAliveManager() {
@@ -37,7 +39,7 @@ public class KeepAliveManager {
                 if (device == null || device == Common.getMyDevice())
                     continue;
                 else {
-                    logger.debug("Initiating KeepAlive:" + device.getAddress());
+                    logger.debug("Initiating KeepAlive:" + device.getIpAddress());
                     Future<Boolean> future = cachedThreadPool.submit(new KeepAliveCallable(device));
                     keepAliveResultMap.put(device, future);
                 }
@@ -47,7 +49,7 @@ public class KeepAliveManager {
                 Future<Boolean> keepAliveFutureTask = mapEntry.getValue();
                 Boolean isDeviceAlive;
                 try {
-                    logger.debug("Trying To get keepAlive for " + device.getAddress());
+                    logger.debug("Trying To get keepAlive for " + device.getIpAddress());
                     isDeviceAlive = keepAliveFutureTask.get(15, TimeUnit.SECONDS);
                 } catch (InterruptedException | ExecutionException e) {
                     e.printStackTrace();
@@ -56,7 +58,7 @@ public class KeepAliveManager {
                     logger.info("TimeOut Exception");
                     isDeviceAlive = false;
                 }
-                logger.debug("keepAlive Result for Device:" + device.getAddress() + ":" + isDeviceAlive);
+                logger.debug("keepAlive Result for Device:" + device.getIpAddress() + ":" + isDeviceAlive);
             }
     }
 

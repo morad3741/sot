@@ -5,5 +5,4 @@ package sot.core.messages;
  */
 public interface Imessage {
     void handle();
-    String getType();
 }

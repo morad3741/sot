@@ -10,7 +10,7 @@ public class Device {
 
     private String Name;
     private Rule rule;
-    private String address;
+    private String ipAddress;
 
     protected Device() {
         // For Jackson
@@ -20,7 +20,7 @@ public class Device {
         Name = name;
         this.rule = null;
         try {
-            this.address = InetAddress.getLocalHost().getHostAddress();
+            this.ipAddress = InetAddress.getLocalHost().getHostAddress();
         } catch (UnknownHostException e) {
             e.printStackTrace();
         }
@@ -42,12 +42,12 @@ public class Device {
         this.rule = rule;
     }
 
-    public String getAddress() {
-        return address;
+    public String getIpAddress() {
+        return ipAddress;
     }
 
-    public void setAddress(String address) {
-        this.address = address;
+    public void setIpAddress(String ipAddress) {
+        this.ipAddress = ipAddress;
     }
 
     @Override
@@ -55,7 +55,7 @@ public class Device {
         return "Device{" +
                 "Name='" + Name + '\'' +
                 ", rule=" + rule +
-                ", address='" + address + '\'' +
+                ", ipAddress='" + ipAddress + '\'' +
                 '}';
     }
 }
