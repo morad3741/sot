@@ -1,17 +1,16 @@
 package sot.core;
 
-import com.fasterxml.jackson.core.type.TypeReference;
 import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 import sot.common.Common;
-import sot.core.entities.Device;
+import sot.core.messages.Imessage;
 
 import java.io.IOException;
 import java.net.*;
-import java.util.ArrayList;
 import java.util.Enumeration;
+import java.util.Map;
 
 /**
  * Created by LD on 18/08/2017.
@@ -24,6 +23,9 @@ public class DiscoveryThread extends Thread {
 
     @Autowired
     IHierarchy hierarchy;
+
+    @Autowired
+    Map<String,Imessage> messageHandlerMap;
 
     @Override
     public void run() {
@@ -65,6 +67,7 @@ public class DiscoveryThread extends Thread {
                     // Send the broadcast package!
                     try {
                         DatagramPacket sendPacket = new DatagramPacket(sendData, sendData.length, broadcast, 8888);
+                        sendPacket = new DatagramPacket(sendData, sendData.length, InetAddress.getByName("172.17.0.2"), 8888);
                         c.send(sendPacket);
                         logger.debug("Discovery packet sent to: " + broadcast.getHostAddress() + "; Interface: " + networkInterface.getDisplayName());
                     } catch (Exception e) {
@@ -89,20 +92,15 @@ public class DiscoveryThread extends Thread {
             if (!hierarchy.getIpsToIgnore().contains(receivePacket.getAddress().getHostAddress())) {
                 logger.debug("Received response from: " + receivePacket.getAddress().getHostAddress());
 
-                //Check if the message is correct
                 String message = new String(receivePacket.getData()).trim();
-                if (message.startsWith("DEVICE_ACCEPTED-")) {
-                    String knownDevicesInNetwork = message.split("DEVICE_ACCEPTED-")[1];
-                    ArrayList<Device> knownDevices = Common.deSerialiseObjectToList(knownDevicesInNetwork, new TypeReference<ArrayList<Device>>() {
-                    });
-                    for (Device device : knownDevices) {
-                        hierarchy.getKnownDevicesInMyNetwork().putIfAbsent(device.getIpAddress(), device);
-                    }
-                    Common.printMap( hierarchy.getKnownDevicesInMyNetwork());
-                }
+                String messageType = message.split("-")[0];
+                Imessage messageHandler = messageHandlerMap.getOrDefault(messageType,null);
+                if (messageHandler != null)
+                    messageHandler.handle(message,receivePacket,null);
+                else
+                    logger.error("Cannot find Message Handler For: " + messageType);
             }
-
-            logger.debug("Finished.");
+            logger.debug("Discovery Thread Finished.");
         } catch (IOException ex) {
             logger.error("ERROR - " + ex.getMessage());
 

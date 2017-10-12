@@ -135,11 +135,11 @@
 			                                <assembly>
 			                                    <descriptorRef>artifact-with-dependencies</descriptorRef>
 			                                </assembly>
-			                                <cmd>java -agentlib:jdwp=transport=dt_socket,address=5005,suspend=y,server=y -jar maven/${project.name}-${project.version}.jar</cmd>
+			                                <cmd>java -agentlib:jdwp=transport=dt_socket,address=5005,suspend=n,server=y -jar maven/${project.name}-${project.version}.jar</cmd>
 			                            </build>
 			                            <run>
 											<ports>
-												<port>5005:5005</port>
+												<!--<port>5005:5005</port>-->
 												<!--<port>host.port:80</port>-->
 												<!--<port>127.0.0.1:80:80</port>-->
 												<!--<port>localhost:host.port:80</port>-->

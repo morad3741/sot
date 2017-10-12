@@ -4,15 +4,12 @@ import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
-import sot.common.Common;
-import sot.core.entities.Device;
 import sot.core.messages.Imessage;
 
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
-import java.util.ArrayList;
 import java.util.Map;
 
 /**
@@ -52,23 +49,9 @@ public class ListeningThread extends Thread {
                     String messageType = message.split("-")[0];
                     Imessage messageHandler = messageHandlerMap.getOrDefault(messageType,null);
                     if (messageHandler != null)
-                        messageHandler.handle();
-                    if (message.startsWith("NEW_DEVICE-")) {
-                        String newDeviceJsonData = message.split("NEW_DEVICE-")[1];
-                        Device newDevice = Common.deSerialiseObject(newDeviceJsonData, Device.class);
-                        if (hierarchy.getKnownDevicesInMyNetwork().get(newDevice.getIpAddress()) == null) {
-                            hierarchy.getKnownDevicesInMyNetwork().putIfAbsent(newDevice.getIpAddress(), newDevice);
-                            Common.printMap(hierarchy.getKnownDevicesInMyNetwork());
-                            String responseData = "DEVICE_ACCEPTED-" + Common.serialiseObject(new ArrayList(hierarchy.getKnownDevicesInMyNetwork().values()));
-                            byte[] sendData = responseData.getBytes();
-
-                            //Send a response
-                            DatagramPacket sendPacket = new DatagramPacket(sendData, sendData.length, packet.getAddress(), packet.getPort());
-                            socket.send(sendPacket);
-
-                            logger.debug("Returned packet to: " + sendPacket.getAddress().getHostAddress() + " data:" + responseData);
-                        }
-                    }
+                        messageHandler.handle(message,packet,socket);
+                    else
+                        logger.error("Cannot find Message Handler For: " + messageType);
                 }
             }
         } catch (IOException ex) {
